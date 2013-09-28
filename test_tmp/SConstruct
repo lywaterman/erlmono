@@ -1,0 +1,4 @@
+Program('main.c',
+    LIBS=['python2.7'],
+    LIBPATH=['/usr/lib/'],
+    CPPPATH=['/usr/include/python2.7'])
