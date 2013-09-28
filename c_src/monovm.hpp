@@ -1,5 +1,11 @@
 #pragma once
 
+#include <mono/jit/jit.h>
+#include <mono/metadata/assembly.h>
+#include <mono/metadata/object.h>
+#include <assert.h>
+#include <string.h>
+
 #include "types.hpp"
 #include "queue.hpp"
 
@@ -70,10 +76,22 @@ public :
     void add_task(task_t const& task);
     task_t get_task();
 
+
     static void destroy(ErlNifEnv* env, void* obj);
     static boost::shared_ptr<vm_t> create(ErlNifResourceType* res_type, erlcpp::lpid_t const& pid);
 
+	MonoDomain* 			 	 domain;
+	MonoAssembly*	     		 assembly;
+	MonoImage*					 image;
+
+	MonoClass*					 myPairClass;
+	MonoClassField *			 key_field;
+	MonoClassField *			 value_field;
+
 private :
+	MonoObject*					 curr_world;
+	MonoObject*					 func_object;
+
     erlcpp::lpid_t               pid_;
     ErlNifTid                    tid_;
     queue<task_t>                queue_;

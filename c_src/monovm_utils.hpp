@@ -1,9 +1,9 @@
 #pragma once
 
-#include "py.hpp"
+#include "monovm.hpp"
 #include "utils.hpp"
 
-namespace py {
+namespace monovm {
 
 /////////////////////////////////////////////////////////////////////////////
 

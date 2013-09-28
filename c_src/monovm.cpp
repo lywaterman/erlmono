@@ -74,7 +74,7 @@ struct call_handler : public base_handler<void>
             if (res != 0)
             {
                 erlcpp::tuple_t result(2);
-                result[0] = erlcpp::atom_t("error_py");
+                result[0] = erlcpp::atom_t("error_mono");
 				result[1] = erlcpp::atom_t("sdfdsfdsf");
                 //result[1] = erlcpp::atom_t(get_py_error());
                 send_result_caller(vm(), "moon_response", result, load.caller);
@@ -88,7 +88,7 @@ struct call_handler : public base_handler<void>
         catch( std::exception & ex )
         {
             erlcpp::tuple_t result(2);
-            result[0] = erlcpp::atom_t("error_py");
+            result[0] = erlcpp::atom_t("error_mono");
             result[1] = erlcpp::atom_t(ex.what());
             send_result_caller(vm(), "moon_response", result, load.caller);
         }
@@ -183,14 +183,45 @@ struct call_handler : public base_handler<void>
 vm_t::vm_t(erlcpp::lpid_t const& pid)
     : pid_(pid)
 {
-	Py_Initialize();
-//	char ff[256] = {0,};
-//	getcwd(ff, 256);
-//
-//	printf("%s\n", "11111111111111111111111");
-//	printf("%s\n", ff);
+	mono_set_dirs("/usr/local/lib", "/etc");
 
-	void* handle = dlopen("/usr/lib/libpython2.7.so", RTLD_NOW | RTLD_GLOBAL); 	
+	mono_config_parse(NULL);
+
+	domain = mono_jit_init_version("root", "v4.0.30319");
+
+	assembly = mono_domain_assembly_open(domain, "root.exe");
+
+	image = mono_assembly_get_image(assembly);
+
+	if (!assembly)
+		assert(0);
+
+	if (!image)
+		assert(0);
+
+	MonoClass * MyWorld = mono_class_from_name(image, "", "MyWorld");
+	if (!MyWorld)
+		assert(0);
+
+	curr_world = mono_object_new(domain, MyWorld);
+
+	if (!curr_world)
+		assert(0);
+    mono_runtime_object_init(myworld);
+
+	//拿到func_object, 包含所有的函数
+	MonoMethod* run_method = mono_class_get_method_from_name(MyWorld, "get_func", 0);
+	func_object = mono_runtime_invoke(run_method, curr_world, NULL, NULL);
+ 
+	myPairClass = mono_class_from_name(image, "", "MyPair");
+
+	if (!myPairClass)
+		assert(0)
+
+	key_field = mono_class_get_field_from_name(myPairClass, "key");
+	value_field = mono_class_get_field_from_name(myPairClass, "value");	
+
+	//void* handle = dlopen("/usr/lib/libpython2.7.so", RTLD_NOW | RTLD_GLOBAL); 	
 	//assert(handle != NULL);
 }
 
